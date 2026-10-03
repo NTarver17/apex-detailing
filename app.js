@@ -12,6 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initServiceSheets();
   initQuoteModal();
   initHeroCanvas();
+  initCookieConsent();
+  initContactForm();
 });
 
 /* ==========================================================================
@@ -171,28 +173,25 @@ function initComparisonSlider() {
 
   if (!slider || !handle) return;
 
-  // Comparison Datasets
+  // Comparison Datasets (Authentic iPhone Detailing Photos on the Purple Lotus Emira)
   const treatments = {
     correction: {
-      afterSrc: 'https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?auto=format&fit=crop&w=2000&q=85',
-      beforeSrc: 'https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?auto=format&fit=crop&w=2000&q=85',
-      beforeClass: 'before-filter-swirls',
-      caption: 'Swirl marks polished out of a red supercar fender, then sealed under 8.5 mil self-healing film.',
-      alt: 'Glossy red sports car fender before and after multi-stage paint correction'
+      afterSrc: 'results-correction-after.jpg',
+      beforeSrc: 'results-correction-before.jpg',
+      caption: 'Severe wash swirls, buffer trails, and oxidized haze on the Lotus Emira leveled to a 100% mirror-gloss purple reflection under shop hex lighting.',
+      alt: 'Purple Lotus Emira before and after multi-stage paint correction in detailing shop bay'
     },
     ceramic: {
-      afterSrc: 'https://images.unsplash.com/photo-1607860108855-64acf2078ed9?auto=format&fit=crop&w=2000&q=85',
-      beforeSrc: 'https://images.unsplash.com/photo-1607860108855-64acf2078ed9?auto=format&fit=crop&w=2000&q=85',
-      beforeClass: 'before-filter-swirls',
-      caption: '5-year professional ceramic coating over single-stage polished paint for deep gloss and hydrophobic water beading.',
-      alt: 'Hydrophobic water beading comparison on ceramic coated bodywork'
+      afterSrc: 'results-ceramic-after.jpg',
+      beforeSrc: 'results-ceramic-before.jpg',
+      caption: 'Sluggish, flat water pooling across untreated paint vs. ultra-slick 112° hydrophobic water beading on the Lotus Emira after 9H ceramic coating.',
+      alt: 'Purple Lotus Emira hood showing sluggish water sheeting vs extreme hydrophobic ceramic beads'
     },
     fullbody: {
-      afterSrc: 'https://images.unsplash.com/photo-1665326278157-0ca35856cb39?auto=format&fit=crop&w=2000&q=85',
-      beforeSrc: 'https://images.unsplash.com/photo-1665326278157-0ca35856cb39?auto=format&fit=crop&w=2000&q=85',
-      beforeClass: 'before-filter-swirls',
-      caption: 'Full-body PPF installed with precision wrapped edges on an exotic sports car under studio inspection lights.',
-      alt: 'Full body paint protection film installation in studio lighting'
+      afterSrc: 'results-ppf-after.jpg',
+      beforeSrc: 'results-ppf-before.jpg',
+      caption: 'Highway stone chips, grit abrasions, and road rash on the Lotus Emira front bumper completely restored and armored under 8.5 mil self-healing PPF.',
+      alt: 'Purple Lotus Emira front bumper road rash damage before vs wrapped self-healing PPF after'
     }
   };
 
@@ -212,10 +211,10 @@ function initComparisonSlider() {
     updateSliderPosition(percent);
   }
 
-  // Pointer & Mouse Events
+  // Pointer & Touch Events
   slider.addEventListener('pointerdown', (e) => {
     isDragging = true;
-    slider.setPointerCapture(e.pointerId);
+    try { slider.setPointerCapture(e.pointerId); } catch (_) {}
     handlePointer(e);
   });
 
@@ -236,6 +235,20 @@ function initComparisonSlider() {
 
   slider.addEventListener('pointerup', stopDrag);
   slider.addEventListener('pointercancel', stopDrag);
+
+  // Native touch fallback for iOS Safari
+  slider.addEventListener('touchstart', (e) => {
+    isDragging = true;
+    handlePointer(e);
+  }, { passive: true });
+
+  slider.addEventListener('touchmove', (e) => {
+    if (isDragging) {
+      handlePointer(e);
+    }
+  }, { passive: true });
+
+  slider.addEventListener('touchend', () => { isDragging = false; });
 
   // Keyboard accessibility
   handle.addEventListener('keydown', (e) => {
@@ -674,4 +687,67 @@ function showToast(message) {
   setTimeout(() => {
     toast.classList.remove('active');
   }, 3500);
+}
+
+/* ==========================================================================
+   10. COOKIE CONSENT BANNER (Google AdSense & GDPR/CCPA Compliance)
+   ========================================================================== */
+function initCookieConsent() {
+  const banner = document.getElementById('cookie-banner');
+  const acceptBtn = document.getElementById('cookie-accept-btn');
+  const declineBtn = document.getElementById('cookie-decline-btn');
+
+  if (!banner) return;
+
+  const cookieChoice = localStorage.getItem('apex_cookie_consent');
+  if (!cookieChoice) {
+    setTimeout(() => {
+      banner.classList.add('visible');
+    }, 1200);
+  }
+
+  if (acceptBtn) {
+    acceptBtn.addEventListener('click', () => {
+      localStorage.setItem('apex_cookie_consent', 'accepted');
+      banner.classList.remove('visible');
+    });
+  }
+
+  if (declineBtn) {
+    declineBtn.addEventListener('click', () => {
+      localStorage.setItem('apex_cookie_consent', 'declined');
+      banner.classList.remove('visible');
+    });
+  }
+}
+
+/* ==========================================================================
+   11. CONTACT PAGE FORM HANDLER
+   ========================================================================== */
+function initContactForm() {
+  const form = document.getElementById('contact-page-form');
+  const successBox = document.getElementById('contact-success-box');
+  if (!form) return;
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span>Transmitting...</span>';
+    }
+
+    setTimeout(() => {
+      form.style.display = 'none';
+      if (successBox) {
+        successBox.classList.remove('hidden');
+      }
+      showToast('Inquiry sent successfully to our studio team!');
+    }, 800);
+  });
 }
